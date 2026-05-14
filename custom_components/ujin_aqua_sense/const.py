@@ -4,12 +4,12 @@ DOMAIN = "ujin_aqua_sense"
 MANUFACTURER_ID = 0xFFFF
 DEVICE_NAME = "Ujin Aqua-Sense"
 
-# Статусы событий
-STATUS_LEAK = 0x02      # протечка (leak)
-STATUS_INPUT = 0x04     # внешний датчик протечки (input)
-STATUS_PRESS = 0x01     # нажатие кнопки
-STATUS_LONG_PRESS = 0x20    # долгое нажатие
-STATUS_VERY_LONG_PRESS = 0x40  # очень долгое нажатие
+# Статусы событий (битовые маски)
+STATUS_PRESS = 0x01           # нажатие кнопки
+STATUS_LEAK = 0x02            # протечка на корпусе
+STATUS_INPUT = 0x04           # внешний датчик протечки (input)
+STATUS_LONG_PRESS = 0x20      # долгое нажатие
+STATUS_VERY_LONG_PRESS = 0x40 # очень долгое нажатие
 
 # Человекочитаемые названия
 STATUS_NAMES = {
