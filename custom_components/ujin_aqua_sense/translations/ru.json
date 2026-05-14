@@ -3,32 +3,19 @@
     "step": {
       "user": {
         "title": "Настройка Ujin Aqua-Sense BLE",
-        "description": "Введите MAC-адрес вашего датчика\nПример: 01:00:5E:00:38:C8",
+        "description": "Выберите устройство из списка",
         "data": {
-          "address": "MAC-адрес"
+          "address": "BLE адрес"
         }
+      },
+      "bluetooth_confirm": {
+        "title": "Обнаружен датчик Ujin Aqua-Sense",
+        "description": "Найден датчик {name} с MAC-адресом `{mac}`\n\nНажмите 'Подтвердить', чтобы добавить его."
       }
-    },
-    "error": {
-      "invalid_address": "Неверный формат MAC-адреса"
     },
     "abort": {
-      "already_configured": "Датчик с таким MAC-адресом уже настроен"
-    }
-  },
-  "entity": {
-    "sensor": {
-      "battery": {
-        "name": "Батарея"
-      }
-    },
-    "binary_sensor": {
-      "input_leak": {
-        "name": "Внешний датчик"
-      },
-      "leak": {
-        "name": "Протечка"
-      }
+      "already_configured": "Датчик с MAC-адресом {mac} уже настроен",
+      "no_devices_found": "Не найдено устройств LD-S. Убедитесь, что датчик включен и находится рядом."
     }
   }
 }
