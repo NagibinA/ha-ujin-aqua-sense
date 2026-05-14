@@ -1,12 +1,16 @@
 {
   "domain": "ujin_aqua_sense",
   "name": "Ujin Aqua-Sense BLE",
-  "version": "1.0.0",
+  "version": "1.0.6",
   "requirements": [],
   "dependencies": ["bluetooth"],
   "codeowners": ["@NagibinA"],
   "config_flow": true,
   "iot_class": "local_push",
-  "issue_tracker": "https://github.com/NagibinA/ha-ujin-aqua-sense/issues",
-  "documentation": "https://github.com/NagibinA/ha-ujin-aqua-sense"
+  "bluetooth": [
+    {
+      "local_name": "LD-S",
+      "connectable": false
+    }
+  ]
 }
