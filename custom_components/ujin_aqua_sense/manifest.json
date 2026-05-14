@@ -1,7 +1,7 @@
 {
   "domain": "ujin_aqua_sense",
   "name": "Ujin Aqua-Sense BLE",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "requirements": [],
   "dependencies": ["bluetooth"],
   "codeowners": ["@NagibinA"],
