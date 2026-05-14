@@ -11,17 +11,7 @@ from homeassistant.components.bluetooth import (
 from homeassistant.const import Platform
 from homeassistant.helpers import device_registry as dr
 
-from .const import (
-    DOMAIN,
-    STATUS_PRESS,
-    STATUS_LEAK,
-    STATUS_INPUT,
-    STATUS_LONG_PRESS,
-    STATUS_VERY_LONG_PRESS,
-    EVENT_LEAK,
-    EVENT_INPUT_LEAK,
-    EVENT_BUTTON,
-)
+from .const import DOMAIN
 
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR]
 _LOGGER = logging.getLogger(__name__)
@@ -33,12 +23,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     
     coordinator = UjinAquaSenseCoordinator(hass, entry.entry_id, entry.unique_id)
     
-    # Регистрируем callback для BLE (без фильтра manufacturer_id)
     entry.async_on_unload(
         async_register_callback(
             hass,
             coordinator._handle_advertisement,
-            None,
+            {"manufacturer_id": 0xFFFF},
             BluetoothScanningMode.PASSIVE,
         )
     )
@@ -80,31 +69,20 @@ class UjinAquaSenseCoordinator:
     ) -> None:
         """Обработка входящего BLE-пакета."""
         try:
-            # Проверяем MAC-адрес
             if service_info.address.lower() != self.address:
                 return
             
             _LOGGER.debug("Получен пакет от %s", service_info.address)
-            _LOGGER.debug("Manufacturer data: %s", service_info.manufacturer_data)
-            _LOGGER.debug("Service data: %s", service_info.service_data)
             
-            # Получаем данные
-            raw_data = None
-            if service_info.manufacturer_data:
-                for key, data in service_info.manufacturer_data.items():
-                    raw_data = data
-                    _LOGGER.debug("Получены manufacturer_data с key=%s", key)
-                    break
-            elif service_info.service_data:
-                for key, data in service_info.service_data.items():
-                    raw_data = data
-                    _LOGGER.debug("Получены service_data с key=%s", key)
-                    break
-            
-            if not raw_data:
-                _LOGGER.warning("Нет данных от %s", self.address)
+            if not service_info.manufacturer_data:
+                _LOGGER.debug("Нет manufacturer_data")
                 return
             
+            if 0xFFFF not in service_info.manufacturer_data:
+                _LOGGER.debug("Нет manufacturer_id 0xFFFF")
+                return
+            
+            raw_data = service_info.manufacturer_data[0xFFFF]
             _LOGGER.debug("Raw data (hex): %s", raw_data.hex())
             
             parsed_data = self._parse_packet(raw_data)
@@ -118,7 +96,7 @@ class UjinAquaSenseCoordinator:
                 
                 self._fire_events(parsed_data)
             else:
-                _LOGGER.warning("Не удалось распарсить пакет от %s", self.address)
+                _LOGGER.warning("Не удалось распарсить пакет")
                 
         except Exception as e:
             _LOGGER.error("Ошибка обработки BLE-пакета: %s", e, exc_info=True)
@@ -127,65 +105,60 @@ class UjinAquaSenseCoordinator:
         """
         Парсинг пакета Ujin Aqua-Sense (LD-S).
         
-        Формат: 05 09 4C 44 2D 53 08 FF FF FF 03 07 50 04 73
-        - байт 12 (индекс 12) = battery (0-100)
-        - байт 13 (индекс 13) = status
+        В manufacturer_data приходят данные, начиная с initial:
+        Байт 0-1: initial (2 байта, little-endian, всегда 0x0307)
+        Байт 2:   battery (0-100)
+        Байт 3:   status
+        Байт 4:   counter (опционально)
         """
-        if len(raw_data) < 14:
+        if len(raw_data) < 4:
             _LOGGER.debug("Пакет слишком короткий: %d байт", len(raw_data))
             return None
         
-        battery = raw_data[12]
-        status_byte = raw_data[13]
+        battery = raw_data[2]
+        status_byte = raw_data[3]
         
-        # Определяем тип события
-        event_type = None
-        if status_byte & STATUS_INPUT:
-            event_type = "input_leak"
-        elif status_byte & STATUS_LEAK:
-            event_type = "leak"
-        elif status_byte & STATUS_VERY_LONG_PRESS:
-            event_type = "very_long_press"
-        elif status_byte & STATUS_LONG_PRESS:
-            event_type = "long_press"
-        elif status_byte & STATUS_PRESS:
-            event_type = "press"
+        if len(raw_data) >= 2:
+            initial = int.from_bytes(raw_data[0:2], byteorder='little')
+            _LOGGER.debug("initial=0x%04X, battery=%d%%, status=0x%02X", initial, battery, status_byte)
         
         result = {
             "battery": battery,
             "status_byte": status_byte,
-            "event_type": event_type,
-            "is_leak": bool(status_byte & STATUS_LEAK),
-            "is_input_leak": bool(status_byte & STATUS_INPUT),
-            "is_press": bool(status_byte & STATUS_PRESS),
-            "is_long_press": bool(status_byte & STATUS_LONG_PRESS),
-            "is_very_long_press": bool(status_byte & STATUS_VERY_LONG_PRESS),
+            "is_leak": bool(status_byte & 0x02),
+            "is_input_leak": bool(status_byte & 0x04),
+            "is_press": bool(status_byte & 0x01),
+            "is_long_press": bool(status_byte & 0x20),
+            "is_very_long_press": bool(status_byte & 0x40),
         }
-        
-        _LOGGER.debug("Парсинг: батарея=%d%%, статус=0x%02X, событие=%s",
-                      battery, status_byte, event_type)
         
         return result
     
     def _fire_events(self, data: dict) -> None:
         """Генерация событий для автоматизаций."""
         if data["is_leak"]:
-            self.hass.bus.async_fire(EVENT_LEAK, {
+            self.hass.bus.async_fire(f"{DOMAIN}_leak", {
                 "device_id": self.address,
                 "battery": data["battery"],
             })
         
         if data["is_input_leak"]:
-            self.hass.bus.async_fire(EVENT_INPUT_LEAK, {
+            self.hass.bus.async_fire(f"{DOMAIN}_input_leak", {
                 "device_id": self.address,
                 "battery": data["battery"],
             })
         
         if data["is_press"] or data["is_long_press"] or data["is_very_long_press"]:
-            self.hass.bus.async_fire(EVENT_BUTTON, {
+            event_type = "press"
+            if data["is_very_long_press"]:
+                event_type = "very_long_press"
+            elif data["is_long_press"]:
+                event_type = "long_press"
+            
+            self.hass.bus.async_fire(f"{DOMAIN}_button", {
                 "device_id": self.address,
                 "battery": data["battery"],
-                "type": data["event_type"],
+                "type": event_type,
             })
     
     def async_add_listener(self, update_callback):
