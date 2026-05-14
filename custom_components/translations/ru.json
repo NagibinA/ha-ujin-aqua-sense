@@ -1,0 +1,34 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Настройка Ujin Aqua-Sense BLE",
+        "description": "Введите MAC-адрес вашего датчика\nПример: 01:00:5E:00:38:C8",
+        "data": {
+          "address": "MAC-адрес"
+        }
+      }
+    },
+    "error": {
+      "invalid_address": "Неверный формат MAC-адреса"
+    },
+    "abort": {
+      "already_configured": "Датчик с таким MAC-адресом уже настроен"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": {
+        "name": "Батарея"
+      }
+    },
+    "binary_sensor": {
+      "input_leak": {
+        "name": "Внешний датчик"
+      },
+      "leak": {
+        "name": "Протечка"
+      }
+    }
+  }
+}
