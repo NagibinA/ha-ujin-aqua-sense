@@ -30,7 +30,11 @@ class UjinAquaSenseConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(discovery_info.address)
         self._abort_if_unique_id_configured()
         self._discovered_device = discovery_info
-        self.context["title_placeholders"] = {"name": "Ujin Aqua-Sense"}
+        # Показываем MAC в заголовке окна подтверждения
+        self.context["title_placeholders"] = {
+            "name": "Ujin Aqua-Sense",
+            "mac": discovery_info.address,
+        }
         return await self.async_step_bluetooth_confirm()
 
     async def async_step_bluetooth_confirm(
@@ -39,14 +43,18 @@ class UjinAquaSenseConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Confirm discovery."""
         if user_input is not None:
             return self.async_create_entry(
-                title="Ujin Aqua-Sense",
+                title=f"Ujin Aqua-Sense ({self._discovered_device.address})",
                 data={"address": self._discovered_device.address},
             )
 
         self._set_confirm_only()
+        # Показываем MAC в описании
         return self.async_show_form(
             step_id="bluetooth_confirm",
-            description_placeholders={"name": "Ujin Aqua-Sense"},
+            description_placeholders={
+                "name": "Ujin Aqua-Sense",
+                "mac": self._discovered_device.address,
+            },
         )
 
     async def async_step_user(
@@ -58,11 +66,14 @@ class UjinAquaSenseConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             await self.async_set_unique_id(address, raise_on_progress=False)
             self._abort_if_unique_id_configured()
             return self.async_create_entry(
-                title="Ujin Aqua-Sense",
+                title=f"Ujin Aqua-Sense ({address})",
                 data={"address": address},
             )
 
+        # Поиск устройств LD-S
         current_addresses = self._async_current_ids()
+        self._discovered_devices.clear()
+        
         for discovery in async_discovered_service_info(self.hass):
             if discovery.address in current_addresses:
                 continue
@@ -72,16 +83,17 @@ class UjinAquaSenseConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if not self._discovered_devices:
             return self.async_abort(reason="no_devices_found")
 
+        # Формируем список с MAC адресами
+        devices_list = {
+            address: f"{discovery.name} [{address}]"
+            for address, discovery in self._discovered_devices.items()
+        }
+
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(
                 {
-                    vol.Required("address"): vol.In(
-                        {
-                            address: f"{discovery.name or 'Ujin Aqua-Sense'} ({address})"
-                            for address, discovery in self._discovered_devices.items()
-                        }
-                    )
+                    vol.Required("address"): vol.In(devices_list)
                 }
             ),
         )
