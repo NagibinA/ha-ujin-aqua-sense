@@ -17,5 +17,29 @@
       "already_configured": "Датчик с MAC-адресом {mac} уже настроен",
       "no_devices_found": "Не найдено устройств LD-S. Убедитесь, что датчик включен и находится рядом."
     }
+  },
+  "entity": {
+    "sensor": {
+      "battery": {
+        "name": "Батарея"
+      }
+    },
+    "binary_sensor": {
+      "leak": {
+        "name": "Протечка"
+      },
+      "input_leak": {
+        "name": "Внешний датчик"
+      },
+      "button_press": {
+        "name": "Нажатие"
+      },
+      "button_long_press": {
+        "name": "Долгое нажатие"
+      },
+      "button_very_long_press": {
+        "name": "Очень долгое нажатие"
+      }
+    }
   }
 }
