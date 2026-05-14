@@ -217,6 +217,9 @@ logger:
 
 MIT License
 
+---
+⭐ Не забудьте поставить звезду репозиторию, если интеграция вам помогла!
+
 ## Автор
 
 [NagibinA](https://github.com/NagibinA)
