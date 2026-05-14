@@ -30,7 +30,7 @@ class UjinAquaSenseLeakSensor(BinarySensorEntity):
     def __init__(self, entry: ConfigEntry, coordinator: UjinAquaSenseCoordinator):
         self.entry = entry
         self.coordinator = coordinator
-        self._attr_name = "Ujin Aqua-Sense Протечка"
+        self._attr_name = "Протечка"
         self._attr_unique_id = f"{entry.unique_id}_leak"
         self._attr_device_class = "moisture"
         self._attr_icon = "mdi:water"
@@ -60,7 +60,7 @@ class UjinAquaSenseInputLeakSensor(BinarySensorEntity):
     def __init__(self, entry: ConfigEntry, coordinator: UjinAquaSenseCoordinator):
         self.entry = entry
         self.coordinator = coordinator
-        self._attr_name = "Ujin Aqua-Sense Внешний датчик"
+        self._attr_name = "Внешний датчик"
         self._attr_unique_id = f"{entry.unique_id}_input_leak"
         self._attr_device_class = "moisture"
         self._attr_icon = "mdi:water"
@@ -86,12 +86,12 @@ class UjinAquaSenseInputLeakSensor(BinarySensorEntity):
 
 
 class UjinAquaSenseButtonPressSensor(BinarySensorEntity):
-    """Обычное нажатие кнопки (сбрасывается автоматически)."""
+    """Обычное нажатие кнопки."""
     
     def __init__(self, entry: ConfigEntry, coordinator: UjinAquaSenseCoordinator):
         self.entry = entry
         self.coordinator = coordinator
-        self._attr_name = "Ujin Aqua-Sense Кнопка (нажатие)"
+        self._attr_name = "Нажатие"
         self._attr_unique_id = f"{entry.unique_id}_button_press"
         self._attr_icon = "mdi:gesture-tap-button"
         self._attr_is_on = False
@@ -115,13 +115,12 @@ class UjinAquaSenseButtonPressSensor(BinarySensorEntity):
         
         if self._attr_is_on and not was_on:
             self.async_write_ha_state()
-            # Автоматически сбрасываем через 1 секунду
             self.hass.async_create_task(self._async_reset())
         else:
             self.async_write_ha_state()
     
     async def _async_reset(self):
-        await self.hass.async_add_executor_job(lambda: None)  # небольшая задержка
+        await self.hass.async_add_executor_job(lambda: None)
         await self.hass.async_create_task(self._async_do_reset())
     
     async def _async_do_reset(self):
@@ -130,12 +129,12 @@ class UjinAquaSenseButtonPressSensor(BinarySensorEntity):
 
 
 class UjinAquaSenseButtonLongPressSensor(BinarySensorEntity):
-    """Долгое нажатие кнопки (сбрасывается автоматически)."""
+    """Долгое нажатие кнопки."""
     
     def __init__(self, entry: ConfigEntry, coordinator: UjinAquaSenseCoordinator):
         self.entry = entry
         self.coordinator = coordinator
-        self._attr_name = "Ujin Aqua-Sense Кнопка (долгое нажатие)"
+        self._attr_name = "Долгое нажатие"
         self._attr_unique_id = f"{entry.unique_id}_button_long_press"
         self._attr_icon = "mdi:gesture-tap-hold"
         self._attr_is_on = False
@@ -169,14 +168,14 @@ class UjinAquaSenseButtonLongPressSensor(BinarySensorEntity):
 
 
 class UjinAquaSenseButtonVeryLongPressSensor(BinarySensorEntity):
-    """Очень долгое нажатие кнопки (сбрасывается автоматически)."""
+    """Очень долгое нажатие кнопки."""
     
     def __init__(self, entry: ConfigEntry, coordinator: UjinAquaSenseCoordinator):
         self.entry = entry
         self.coordinator = coordinator
-        self._attr_name = "Ujin Aqua-Sense Кнопка (очень долгое нажатие)"
+        self._attr_name = "Очень долгое нажатие"
         self._attr_unique_id = f"{entry.unique_id}_button_very_long_press"
-        self._attr_icon = "mdi:gesture-tap-hold"
+        self._attr_icon = "mdi:gesture-two-tap"
         self._attr_is_on = False
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.unique_id)},
